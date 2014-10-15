@@ -28,7 +28,7 @@ class IndexerFullScan extends Indexer implements Serializable {
 
   // Maps each term to their integer representation
   private Map<String, Integer> _dictionary = new HashMap<String, Integer>();
-  // All unique terms appeared in corpus. Offsets are integer representations.
+  // All unique terms appeared in corpus. Offsets are integer representations. This is used to mainly get the nextInt id for the term
   private Vector<String> _terms = new Vector<String>();
 
   // Term document frequency, key is the integer representation of the term and
@@ -59,6 +59,9 @@ class IndexerFullScan extends Indexer implements Serializable {
    * 
    * @throws IOException
    */
+  
+  // constructIndex will call processDocument 
+  //processDocument : will create token, add to _dctionary and populate in _termCorpusFrequency and _termDocFrequency
   @Override
   public void constructIndex() throws IOException {
     String corpusFile = _options._corpusPrefix + "/corpus.tsv";
@@ -99,7 +102,7 @@ class IndexerFullScan extends Indexer implements Serializable {
 
     Vector<Integer> bodyTokens = new Vector<Integer>();
     readTermVector(s.next(), bodyTokens);
-
+    // corpus = title + body + nmviews, seperated by /t
     int numViews = Integer.parseInt(s.next());
     s.close();
 
@@ -133,6 +136,7 @@ class IndexerFullScan extends Indexer implements Serializable {
       if (_dictionary.containsKey(token)) {
         idx = _dictionary.get(token);
       } else {
+    	
         idx = _terms.size();
         _terms.add(token);
         _dictionary.put(token, idx);
