@@ -1,14 +1,20 @@
 package edu.nyu.cs.cs2580;
 
 import java.io.IOException;
+import java.util.Vector;
 
 import edu.nyu.cs.cs2580.SearchEngine.Options;
 
 /**
  * @CS2580: Implement this class for HW2.
  */
-public class IndexerInvertedOccurrence extends Indexer {
 
+
+public class IndexerInvertedOccurrence extends Indexer {
+	 
+  // Stores all Document in memory.
+  private Vector<Document> _documents = new Vector<Document>();
+	  
   public IndexerInvertedOccurrence(Options options) {
     super(options);
     System.out.println("Using Indexer: " + this.getClass().getSimpleName());
@@ -16,6 +22,20 @@ public class IndexerInvertedOccurrence extends Indexer {
 
   @Override
   public void constructIndex() throws IOException {
+	  String corpusFile = _options._corpusPrefix;
+	  DocProcessor dp = new DocProcessor(corpusFile);
+	  while(dp.hasNextDoc()){
+		  dp.nextDoc();
+		  processDocument(dp.title, dp.body);
+	  }
+  }
+  
+  private void processDocument(String title, String body){
+	  Document doc = new Document(_documents.size());
+	  doc.setTitle(title);
+	  _documents.add(doc);
+	  ++_numDocs;
+	  System.out.println(title);
   }
 
   @Override
