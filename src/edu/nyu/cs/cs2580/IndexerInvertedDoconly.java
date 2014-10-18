@@ -1,7 +1,10 @@
 package edu.nyu.cs.cs2580;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +23,7 @@ import edu.nyu.cs.cs2580.SearchEngine.Options;
 
 // check if this should implement serializable
 public class IndexerInvertedDoconly extends Indexer {
+	final int BULK_DOC_PROCESSING_SIZE = 2;
 
 	// Data structure to maintain unique terms with id
 	private Map<String, Integer> _dictionary;
@@ -54,6 +58,9 @@ public class IndexerInvertedDoconly extends Indexer {
 			String line = null;
 			while ((line = reader.readLine()) != null) {
 				processDocument(line);
+				if(_numDocs % BULK_DOC_PROCESSING_SIZE == 0){
+					writeFile(_characterMap);
+				}
 			}
 		} finally {
 			reader.close();
@@ -74,7 +81,7 @@ public class IndexerInvertedDoconly extends Indexer {
 		buildMapFromTokens(uniqueTermSetBody,docId);
 		// write to the file here based on some condition
 		// so that it does not create out of bound memory
-		
+
 		++ _numDocs;
 	}
 
@@ -115,6 +122,28 @@ public class IndexerInvertedDoconly extends Indexer {
 		}
 	}
 
+	private void writeFile( Map <Character, Map<String, List<Integer>>> characterMap) throws IOException{
+		for(Map.Entry<Character, Map<String, List<Integer>>> entry : characterMap.entrySet()){
+			String path = _options._indexPrefix + "/" + entry.getKey() + ".idx";
+			File file = new File(path);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			Map<String,List<Integer>> docMap = entry.getValue();
+			for(Map.Entry<String, List<Integer>> entry1 : docMap.entrySet()){
+				String wordName = entry1.getKey();
+				List<Integer> docList = entry1.getValue();
+				writer.write(wordName);
+				StringBuffer sb = new StringBuffer();
+				for(Integer docId : docList){
+					sb.append(":").append(docId).append(",");
+				}
+				writer.write(sb.toString());
+				writer.write("\n");
+			} 
+			writer.close();
+		}
+
+	}
+
 	// This is used when the SearchEngine is called with the serve option
 	@Override
 	public void loadIndex() throws IOException, ClassNotFoundException {
@@ -139,14 +168,14 @@ public class IndexerInvertedDoconly extends Indexer {
 	@Override
 	public int corpusDocFrequencyByTerm(String term) {
 		return _dictionary.containsKey(term) ?
-				_termDocFrequency.get(_dictionary.get(term)) : 0;
+				_documentTermFrequency.get(_dictionary.get(term)) : 0;
 	}
 
 	//number of times a term appears in corpus
 	@Override
 	public int corpusTermFrequency(String term) {
 		return _dictionary.containsKey(term) ?
-				_termCorpusFrequency.get(_dictionary.get(term)) : 0;
+				_corpusTermFrequency.get(_dictionary.get(term)) : 0;
 	}
 
 	// number of times a term occurs in document
